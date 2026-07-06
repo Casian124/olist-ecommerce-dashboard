@@ -21,16 +21,16 @@ I chose it over cleaner tutorial datasets because it reflects real operational c
 ## Findings
 
 **Late deliveries are the main driver of low review scores.**
-On-time orders average a 4.2 review score; orders more than 8 days late average 1.7. I treated this as a hypothesis and tested it against the data — the relationship is clean and monotonic. On-time delivery is the strongest predictor of satisfaction in the dataset.
+On-time orders average a 4.2 review score; orders more than 8 days late average 1.7. I treated this as a hypothesis and tested it against the data — the relationship is clean and monotonic. On-time delivery is the strongest predictor of satisfaction in the dataset. The implication for a product or operations team: reliability of delivery, not average speed, is where satisfaction is won or lost.
 
 **The delay originates in shipping, not internal processing.**
-Broken into stages, roughly 9.3 of the ~12 total delivery days are spent in carrier transit, against 0.5 days for order approval. Operational improvement should target logistics, not internal workflow.
+Broken into stages, roughly 9.3 of the ~12 total delivery days are spent in carrier transit, against 0.5 days for order approval. This points investment toward carrier performance and last-mile logistics rather than internal workflow, where there is little time left to recover.
 
 **Poor performance is concentrated in specific segments.**
-A small number of categories (home_comfort_2, furniture_mattress, and a few others) show both the worst delivery times and the worst reviews simultaneously — a clear set of targets rather than a system-wide problem.
+A small number of categories (home_comfort_2, furniture_mattress, and a few others) show both the worst delivery times and the worst reviews simultaneously. Rather than a system-wide fix, this argues for targeted intervention on a defined set of categories and sellers that generate a disproportionate share of poor experience.
 
 **The baseline is strong.**
-Olist delivers 12 days faster than promised on average. The issue is consistency, not speed: most orders perform well, and the late tail accounts for the dissatisfaction.
+Olist delivers 12 days faster than promised on average. The issue is consistency, not speed: most orders perform well, and the late tail accounts for the dissatisfaction. The practical takeaway is to focus on reducing variance in delivery times rather than lowering the average.
 
 ---
 
@@ -57,8 +57,6 @@ Key modeling decisions:
 - Unique customers are counted on customer_unique_id rather than customer_id, which in this dataset is unique per order and would otherwise overstate the customer base.
 - Revenue is derived from order_items[price] so it slices correctly by product and category.
 - Cross-filter direction on the orders / order_items relationship is set so category and product filters reach the order- and review-level measures.
-
-Data-quality note: early in the build, revenue came out roughly 100x too high. The price column was being parsed under a locale that read the decimal point as a thousands separator (58.90 loaded as 5890). It was caught by comparing the total against the expected order of magnitude and fixed by setting the correct locale at import.
 
 The model includes 25 DAX measures covering revenue, orders, delivery performance, review sentiment, journey stages, and stage-by-stage duration.
 
