@@ -1,77 +1,72 @@
 ﻿# eCommerce Customer Experience Dashboard — Power BI
 
-Analyzing 100K+ real orders from a Brazilian marketplace to figure out where the customer experience actually breaks — and what you'd do about it.
+A Power BI analysis of 100K+ real orders from a Brazilian marketplace, examining where customer experience degrades across the order journey and what drives it.
 
 ---
 
-## Why I built this
+## The question
 
-Most dashboards tell you what happened. Revenue went up, orders went down, here's a chart. Fine, but it doesn't help anyone decide anything. I wanted to build one that answers a harder question:
-
-**Where in the customer journey does the experience fall apart, and what's causing it?**
-
-So that's the thread the whole thing hangs on. Every page is there to answer a piece of it, and if a chart didn't earn its place against that question, it didn't make the cut.
+The project is built around one question: where in the customer journey does experience degrade, and what causes it? Each page answers part of that, and every visual is there because it contributes to the answer.
 
 ---
 
 ## The data
 
-I used the Brazilian E-Commerce Public Dataset from Olist — about 100,000 real orders between 2016 and 2018 from an actual marketplace, covering customers, orders, items, payments, reviews, products and sellers.
+Brazilian E-Commerce Public Dataset by Olist (Kaggle) — roughly 100,000 real orders from 2016 to 2018, covering customers, orders, items, payments, reviews, products and sellers.
 
-I picked it over the usual clean tutorial datasets on purpose. This one is messy in the way real data is messy: late deliveries, cancellations, angry one-star reviews, orders that never arrive. And every order comes with its full timeline — when it was bought, approved, shipped, delivered, reviewed. That timeline is what makes the journey analysis possible.
-
----
-
-## What I found
-
-**Late deliveries wreck satisfaction. That is the whole story in one line.**
-When an order shows up on time, the average review is 4.2. When it is more than 8 days late, it drops to 1.7. I went in treating that as a guess and let the data settle it — and it is about as clean a relationship as you will ever see. On-time delivery is not a driver of satisfaction, it is the driver. A late order loses more than half its rating.
-
-**And the slowdown is in shipping, not in the office.**
-When I broke the journey into stages, the picture got obvious fast. Out of roughly 12 days from purchase to doorstep, 9.3 of them are just the package sitting in transit. Order approval? Half a day. So if you are trying to fix the experience, you are fixing logistics — the internal side is already fast.
-
-**The bad stuff clusters.**
-It is not spread evenly across the catalogue. A few categories — home_comfort_2, furniture_mattress, a couple of others — manage to have both the worst delivery times and the worst reviews at once. Which is actually good news if you are the one fixing it: you do not boil the ocean, you go after the handful of segments doing most of the damage.
-
-**But honestly, the baseline is solid.**
-Olist delivers 12 days faster than it promises, on average. So the problem was never speed. It is consistency. Most orders are fine — it is the tail that is brutal, and that tail is what customers remember.
+I chose it over cleaner tutorial datasets because it reflects real operational conditions: late deliveries, cancellations, low-star reviews, and orders that never complete. Each order carries a full timeline (purchase, approval, shipping, delivery, review), which is what makes the journey analysis possible.
 
 ---
 
-## How it is put together
+## Findings
 
-I built it to read like an argument, not a wall of charts — start with the health of the business, walk through the journey, zoom into where it hurts, then say what to do.
+**Late deliveries are the main driver of low review scores.**
+On-time orders average a 4.2 review score; orders more than 8 days late average 1.7. I treated this as a hypothesis and tested it against the data — the relationship is clean and monotonic. On-time delivery is the strongest predictor of satisfaction in the dataset.
 
-**Page 1 — Sales Overview.** The headline numbers (revenue, orders, customers, average order value), the revenue trend, what is actually driving revenue by category, how people pay, and the first hint of the delivery-vs-reviews story.
+**The delay originates in shipping, not internal processing.**
+Broken into stages, roughly 9.3 of the ~12 total delivery days are spent in carrier transit, against 0.5 days for order approval. Operational improvement should target logistics, not internal workflow.
 
-**Page 2 — Customer Journey.** The whole journey as a funnel — purchased through approved, shipped, delivered, reviewed — with the drop-off at each step, where orders end up, how long each leg takes, and whether some regions complete more cleanly than others.
+**Poor performance is concentrated in specific segments.**
+A small number of categories (home_comfort_2, furniture_mattress, and a few others) show both the worst delivery times and the worst reviews simultaneously — a clear set of targets rather than a system-wide problem.
 
-**Page 3 — Customer Satisfaction.** Categories and sellers ranked by how often they get low reviews and late deliveries, so the specific troublemakers surface instead of hiding in the average. There is a ranking table with conditional formatting so the worst offenders jump out.
-
-**Page 4 — Key Findings.** Six takeaways, each written as the insight plus what it means — the page you would actually read first if someone handed you this.
+**The baseline is strong.**
+Olist delivers 12 days faster than promised on average. The issue is consistency, not speed: most orders perform well, and the late tail accounts for the dissatisfaction.
 
 ---
 
-## The technical side
+## Report structure
 
-The model is a star schema — orders in the middle as the fact table, with customers, products, sellers, payments and reviews around it, plus a category-translation table and a proper Calendar table for anything time-based.
+The report follows a deliberate order: overall business health, then the journey, then the problem areas, then recommendations.
 
-A few decisions that actually mattered:
+**Page 1 — Sales Overview.** Headline KPIs (revenue, orders, customers, average order value), revenue trend, revenue by category, payment mix, and an initial view of the delivery-to-reviews relationship.
 
-- I count unique customers on customer_unique_id, not customer_id. In this dataset customer_id is unique per order, so if you count it you massively overstate how many customers you have. Easy trap, and a lot of Olist analyses fall into it.
-- Revenue comes from order_items[price] so it slices properly by product and category.
-- I set the cross-filter direction on the orders / order_items relationship deliberately, so category and product filters actually reach the order- and review-level measures instead of dead-ending.
+**Page 2 — Customer Journey.** The journey as a funnel (purchased, approved, shipped, delivered, reviewed) with drop-off at each stage, order-status breakdown, time spent per stage, and completion rate by region.
 
-And one war story, because it is the useful part: about halfway through, revenue came out roughly 100 times too big. Turned out the price column was being read under a locale that treated the decimal point as a thousands separator — so 58.90 was being loaded as 5890. I only caught it because the total looked absurd next to what I knew the number should roughly be. Forced the right locale on import and it snapped back into place. It is a tiny thing that silently ruins an entire analysis if nobody is paying attention, which is kind of the whole point.
+**Page 3 — Customer Satisfaction.** Categories and sellers ranked by low-review and late-delivery rates, with a conditional-formatted ranking table to surface the worst performers.
 
-There are 25 DAX measures in total, covering revenue, orders, delivery performance, review sentiment, the journey stages, and the time spent on each leg.
+**Page 4 — Key Findings.** Six findings, each stated as an insight and its business implication.
+
+---
+
+## Technical approach
+
+The model is a star schema with orders as the fact table, surrounded by customers, products, sellers, payments and reviews, plus a category-translation table and a dedicated Calendar table for time intelligence.
+
+Key modeling decisions:
+
+- Unique customers are counted on customer_unique_id rather than customer_id, which in this dataset is unique per order and would otherwise overstate the customer base.
+- Revenue is derived from order_items[price] so it slices correctly by product and category.
+- Cross-filter direction on the orders / order_items relationship is set so category and product filters reach the order- and review-level measures.
+
+Data-quality note: early in the build, revenue came out roughly 100x too high. The price column was being parsed under a locale that read the decimal point as a thousands separator (58.90 loaded as 5890). It was caught by comparing the total against the expected order of magnitude and fixed by setting the correct locale at import.
+
+The model includes 25 DAX measures covering revenue, orders, delivery performance, review sentiment, journey stages, and stage-by-stage duration.
 
 ---
 
 ## Files
 
-- Olist.Project.pbix — the full report, open it in Power BI Desktop
-- /screenshots — the pages, if you just want to look
+- Olist.Project.pbix — the full report (Power BI Desktop)
 
 ## Built with
 
